@@ -19,7 +19,7 @@ import platform
 import re
 import sys
 
-from argparse import ArgumentParser, ArgumentError, RawDescriptionHelpFormatter
+from argparse import ArgumentParser, ArgumentError
 # Following are for mypy
 from argparse import Action  # noqa: F401 # pylint: disable=W0611
 from argparse import Namespace  # noqa: F401 # pylint: disable=W0611
@@ -33,11 +33,6 @@ try:
 except ImportError:
     sys.stderr.write("python typing module is not installed" + os.linesep)
 
-try:
-    # Windows support
-    from ctypes import windll
-except:
-    pass
 
 @unique
 class ExitStatus(Enum):
@@ -70,8 +65,7 @@ class ExitStatus(Enum):
                 RETURN_FALSE (80)
                     Indicate the program did not have error, nor failed,
                     just not doing what you might hope it to do.
-                    For example, zanata-release-notes-prepend returns RETURN_FALSE
-                    when the version-name exists, but no issues.
+                    or simply give a status code for false value.
     """
     OK = 0
     FATAL_UNSPECIFIED = 1
@@ -106,49 +100,46 @@ class ColoredLogHandler(logging.StreamHandler):
     bg = os.getenv("LOGGING_BG_COLOR", 'black')  # Default black background
 
     COLOR_MAPPING = {
-            'DEBUG': [os.getenv("LOGGING_DEBUG_COLOR", 'white'), bg],  # white
-            'INFO': [os.getenv("LOGGING_INFO_COLOR", 'cyan'), bg],  # cyan
-            'WARNING': [os.getenv("LOGGING_WARNING_COLOR", 'yellow'), bg],  # yellow
-            'ERROR': [os.getenv("LOGGING_ERROR_COLOR", 'red'), bg],  # red
-            'CRITICAL': ['white', 'red']}  # white on red bg
+            'DEBUG': [os.getenv("LOGGING_DEBUG_COLOR", 'white'), bg],
+            'INFO': [os.getenv("LOGGING_INFO_COLOR", 'cyan'), bg],
+            'WARNING': [os.getenv("LOGGING_WARNING_COLOR", 'yellow'), bg],
+            'ERROR': [os.getenv("LOGGING_ERROR_COLOR", 'red'), bg],
+            'CRITICAL': ['white', 'red']}
 
-    def __init__(self, stream=None, level=logging.NOTSET):
+    def __init__(self, stream=None):
         super(ColoredLogHandler, self).__init__(stream)
 
     def emit_windows(self, record):
-        import ctypes
         FOREGROUND_COLOR = {
-            'black'  : 0x0000,
-            'blue'   : 0x0001,
-            'green'  : 0x0002,
-            'red'    : 0x0004,
-            'cyan'   : 0x0003,
+            'black':   0x0000,
+            'blue':    0x0001,
+            'green':   0x0002,
+            'red':     0x0004,
+            'cyan':    0x0003,
             'megenta': 0x0005,
-            'yellow' : 0x0006,
-            'white'  : 0x000f}
+            'yellow':  0x0006,
+            'white':   0x000f}
 
         BACKGROUND_COLOR = {
-            'black'  : 0x0000,
-            'blue'   : 0x0010,
-            'green'  : 0x0020,
-            'red'    : 0x0040,
-            'cyan'   : 0x0030,
+            'black':   0x0000,
+            'blue':    0x0010,
+            'green':   0x0020,
+            'red':     0x0040,
+            'cyan':    0x0030,
             'megenta': 0x0050,
-            'yellow' : 0x0060,
-            'white'  : 0x00f0}
+            'yellow':  0x0060,
+            'white':   0x00f0}
 
         # winbase.h
-        STD_INPUT_HANDLE = -10
-        STD_OUTPUT_HANDLE = -11
         STD_ERROR_HANDLE = -12
 
         # add methods we need to the class
         def _set_color(code):
-            import ctypes
+            from ctypes import windll
             # Constants from the Windows API
             # self.STD_OUTPUT_HANDLE = -11
-            hdl = ctypes.windll.kernel32.GetStdHandle(STD_ERROR_HANDLE)
-            ctypes.windll.kernel32.SetConsoleTextAttribute(hdl, code)
+            hdl = windll.kernel32.GetStdHandle(STD_ERROR_HANDLE)
+            windll.kernel32.SetConsoleTextAttribute(hdl, code)
 
         def _set_level_color(level):
             fg_color, bg_color = ColoredLogHandler.COLOR_MAPPING[level]
@@ -162,24 +153,24 @@ class ColoredLogHandler(logging.StreamHandler):
     def emit_ansi(self, record):
         # add methods we need to the class
         FOREGROUND_COLOR = {
-            'black'  : 30,
-            'blue'   : 34,
-            'green'  : 32,
-            'red'    : 31,
-            'cyan'   : 36,
+            'black':   30,
+            'blue':    34,
+            'green':   32,
+            'red':     31,
+            'cyan':    36,
             'megenta': 35,
-            'yellow' : 33,
-            'white'  : 37}
+            'yellow':  33,
+            'white':  37}
 
         BACKGROUND_COLOR = {
-            'black'  : 40,
-            'blue'   : 44,
-            'green'  : 42,
-            'red'    : 41,
-            'cyan'   : 46,
+            'black':   40,
+            'blue':    44,
+            'green':   42,
+            'red':     41,
+            'cyan':    46,
             'megenta': 45,
-            'yellow' : 43,
-            'white'  : 47}
+            'yellow':  43,
+            'white':   47}
 
         def _color(fg_code, bg_code, content):
             if os.getenv('LOGGING_NO_COLOR', '0') != '0':
@@ -198,7 +189,6 @@ class ColoredLogHandler(logging.StreamHandler):
             self.flush()
         except Exception:
             self.handleError(record)
-
 
     def emit(self, record):
         if platform.system() == 'Windows':
@@ -231,7 +221,7 @@ class GenericArgParser(ArgumentParser):
         # argument "formatter_class"
         # See https://github.com/python/mypy/issues/1028
         super(GenericArgParser, self).__init__(
-                *args, formatter_class=RawDescriptionHelpFormatter, **kwargs)
+                *args, **kwargs)
         self.env_def = {}  # type: Dict[str, dict]
         self.parent_parser = ArgumentParser(add_help=False)
         self.add_argument(
@@ -242,7 +232,7 @@ class GenericArgParser(ArgumentParser):
 
         self.sub_parsers = None  # type: _SubParsersAction
         self.sub_command_obj_dict = {}  # type: Dict[str, Any]
-        self.logger = None
+        self.logger = None  # type: logging.Logger
 
     def add_common_argument(self, *args, **kwargs):
         # type:  (Any, Any) -> None
@@ -288,7 +278,7 @@ class GenericArgParser(ArgumentParser):
                     anonymous_parser.add_argument(*k.split())
         anonymous_parser.set_defaults(sub_command=name)
 
-    def add_env(# pylint: disable=too-many-arguments
+    def add_env(  # pylint: disable=too-many-arguments
             self, env_name,
             default=None,
             required=False,
@@ -368,6 +358,7 @@ class GenericArgParser(ArgumentParser):
                     sub_args,
                     obj,
                     help=re.sub(
+
                             "\n.*$", "", m_obj.__doc__, flags=re.MULTILINE),
                     description=m_obj.__doc__)
 
@@ -397,11 +388,11 @@ class GenericArgParser(ArgumentParser):
         """Whether this parser parses this environment"""
         return env_name in self.env_def
 
-    def set_logger(self, verbose='INFO', name=None):
-        # type: (str) -> None
+    def set_logger(self, verbose='INFO', **get_logger_kwargs):
+        # type: (str, str) -> None
         """Handle logger
         Inspired from KurtJacobson's colored_log.py"""
-        self.logger = logging.getLogger(name)
+        self.logger = logging.getLogger(**get_logger_kwargs)
         # Add console handler
 
         c_handler = ColoredLogHandler()
@@ -418,7 +409,7 @@ class GenericArgParser(ArgumentParser):
             ArgumentError(None, "Invalid verbose level: %s" % verbose)
 
     def parse_args(self, args=None, namespace=None):
-        # type: (Any, Any) -> Namespace
+        # type: (Optional[List[Any]], Optional[Namespace]) -> Namespace
         """Parse arguments"""
         result = super(GenericArgParser, self).parse_args(args, namespace)
         self.set_logger(result.verbose)
@@ -470,12 +461,12 @@ class GenericArgParser(ArgumentParser):
         return result
 
     def parse_all(self, args=None, namespace=None):
-        # type: (List, Namespace) -> Namespace
+        # type: (Optional[List[Any]], Optional[Namespace]) -> Namespace
         """Parse arguments and environment"""
         result = self.parse_args(args, namespace)
         env_dict = self.parse_env(result)
-        for k, v in env_dict.iteritems():  # pylint: disable=no-member
-            setattr(result, k, v)
+        for k in env_dict.keys():
+            setattr(result, k, env_dict[k])
         return result
 
     def run_sub_command(self, args=None):
@@ -512,8 +503,6 @@ class GenericArgParser(ArgumentParser):
                 continue
             arg_values.append(getattr(args, a))
         return sub_cmd_obj(*arg_values)
-
-
 
 
 if __name__ == '__main__':
