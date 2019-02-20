@@ -10,7 +10,6 @@ https://gist.github.com/KurtJacobson/c87425ad8db411c73c6359933e5db9f9
 Requires: python >=3.4  (Enum support)
 """
 
-from __future__ import (absolute_import, division, print_function)
 from enum import Enum, unique
 import inspect
 import logging
@@ -30,6 +29,7 @@ try:
     from typing import Dict  # noqa: F401 # pylint: disable=W0611
     from typing import Optional  # noqa: F401 # pylint: disable=W0611
     from typing import Tuple  # noqa: F401 # pylint: disable=W0611
+    from typing import Union  # noqa: F401 # pylint: disable=W0611
 except ImportError:
     sys.stderr.write("python typing module is not installed" + os.linesep)
 
@@ -230,9 +230,9 @@ class GenericArgParser(ArgumentParser):
                 help='Valid values: %s'
                 % 'DEBUG, INFO, WARNING, ERROR, CRITICAL, NONE')
 
-        self.sub_parsers = None  # type: _SubParsersAction
+        self.sub_parsers = None  # type: Union[None, _SubParsersAction]
         self.sub_command_obj_dict = {}  # type: Dict[str, Any]
-        self.logger = None  # type: logging.Logger
+        self.logger = None  # type: Union[None, logging.Logger]
 
     def add_common_argument(self, *args, **kwargs):
         # type:  (Any, Any) -> None
