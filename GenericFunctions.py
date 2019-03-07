@@ -604,10 +604,11 @@ def main():
             help='Show Python Module help')
     args = parser.parse_all()
 
-    if args.sub_command == 'module-help':
-        help(sys.modules[__name__])
-    else:
-        parser.run_sub_command(args)
+    if 'sub_command' in args:
+        if args.sub_command == 'module-help':
+            help(sys.modules[__name__])
+        else:
+            parser.run_sub_command(args)
 
 
 if __name__ == '__main__':

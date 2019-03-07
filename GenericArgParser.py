@@ -252,6 +252,14 @@ class GenericArgParser(ArgumentParser):
             obj (Any, optional): Defaults to None. The sub_command is
                 a method of the obj.
             kwargs (Any, optional): other arguments for add_parser
+
+            Example:
+            >>> import GenericArgParser
+            >>> parser = GenericArgParser.GenericArgParser('my-prog')
+            >>> parser.add_sub_command('module-help', None, help='Module help')
+            >>> args = parser.parse_all(['module-help'])
+            >>> print(args.sub_command)
+            module-help
         """
         if not self.sub_parsers:
             self.sub_parsers = self.add_subparsers(
