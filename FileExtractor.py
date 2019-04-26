@@ -2,10 +2,10 @@
 """Extract the downloaded tar.gz"""
 
 import logging
-import GenericFunctions
+import CommonFunctions
 
-from GenericArgParser import GenericArgParser
-from GenericFunctions import TgzHelper, next_file
+from CommonArgParser import CommonArgParser
+from CommonFunctions import TgzHelper, next_file
 
 
 def untgz(tgz_filename, out_dir):
@@ -22,7 +22,7 @@ def untgz(tgz_filename, out_dir):
 
 def main():
     """Run as command line program"""
-    parser = GenericArgParser(__file__)
+    parser = CommonArgParser(__file__)
     parser.add_argument('src_dir', help='Source directory')
     parser.add_argument(
             'out_dir',
@@ -35,5 +35,5 @@ def main():
 
 
 if __name__ == '__main__':
-    GenericFunctions.run_doctest_and_quit_if_enabled()
+    CommonFunctions.run_doctest_and_quit_if_enabled()
     main()

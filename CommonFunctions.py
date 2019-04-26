@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Generic Helper Function"""
+"""Common Helper Function"""
 
 import errno
 import fnmatch
@@ -9,12 +9,12 @@ import os
 import re
 import subprocess  # nosec
 import sys
-import urllib
+import urllib.parse
 import urllib.request
 
 from contextlib import contextmanager
 from distutils.version import LooseVersion
-from GenericArgParser import GenericArgParser
+from CommonArgParser import CommonArgParser
 
 try:
     from typing import List, Any  # noqa: F401 # pylint: disable=unused-import
@@ -290,10 +290,10 @@ class SshHost(object):
 
     @classmethod
     def add_parser(cls, arg_parser=None):
-        # type (GenericArgParser) -> GenericArgParser
+        # type (CommonArgParser) -> CommonArgParser
         """Add SshHost parameters to a parser"""
         if not arg_parser:
-            arg_parser = GenericArgParser(
+            arg_parser = CommonArgParser(
                     description=cls.__doc__)
         arg_parser.add_common_argument(
                 '-u', '--ssh-user', type=str,
@@ -411,10 +411,10 @@ class TgzHelper(object):
 
     This class uses external tar executiable, for it has better verbose output
     """
+
+    COMMAND = '/usr/bin/tar'
     if platform.system() == 'Windows':
         COMMAND = "C:\\WINDOWS\\system32\\tar.exe"
-    else:
-        COMMAND = "/usr/bin/tar"
 
     def __init__(self, tgz_filename, output_dir=None):
         self.tgz_filename = tgz_filename
@@ -597,14 +597,14 @@ def working_directory(directory):
 
 def main():
     """Run as command line program"""
-    parser = GenericArgParser(__file__)
+    parser = CommonArgParser(__file__)
     parser.add_methods_as_sub_commands(GitHelper)
     parser.add_sub_command(
             'module-help', None,
             help='Show Python Module help')
     args = parser.parse_all()
 
-    if 'sub_command' in args:
+    if hasattr(args, 'sub_command'):
         if args.sub_command == 'module-help':
             help(sys.modules[__name__])
         else:
