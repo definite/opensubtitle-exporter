@@ -2,8 +2,10 @@
 Export [opensubtitles](http://www.opensubtitles.org) database to other formats
 such as CSV, Excel, or SQL.
 
-The XML is from http://opus.nlpl.eu/OpenSubtitles-v2018.php
-
+The XML files are from 
+ * http://opus.nlpl.eu/OpenSubtitles-v2018.php
+ * http://opus.nlpl.eu/OpenSubtitles-alt-v2018.php
+ 
 ## Utilities
 ### RemoveUnmatching.sh
 This script removes the documents that do not exist in matching document
